@@ -247,7 +247,6 @@ export const getSongWithAudio = async (songId: string): Promise<Song | null> => 
     if (!song) return null;
 
     const audioData = await getAudio(songId);
-    console.debug("🚀 ~ getSongWithAudio ~ audioData:", audioData)
     return {
       ...song,
       audioUrl: audioData || '',

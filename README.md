@@ -1,6 +1,6 @@
-# Karaoke Lyrics App
+# Music App
 
-Ứng dụng hiển thị lyric karaoke với nhiều hiệu ứng chạy chữ, được xây dựng bằng React và Mantine.
+Ứng dụng phát nhạc kèm lyric với nhiều hiệu ứng chạy chữ, được xây dựng bằng React và Mantine.
 
 ## Tính năng
 

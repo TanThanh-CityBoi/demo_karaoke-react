@@ -13,7 +13,8 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { IconPlus, IconMusic } from '@tabler/icons-react';
-import type { Song, LyricEffect } from './types';
+import type { Song, LyricEffect, TerminalThemeId } from './types';
+import { TERMINAL_THEMES } from './types';
 import { getSongs, addSong, updateSong, deleteSong, getSongWithAudio } from './utils/storage';
 import { createNangThoMockData } from './data/mockSongs';
 import { LyricDisplay } from './components/LyricDisplay';
@@ -30,11 +31,14 @@ const EFFECTS: { value: LyricEffect; label: string }[] = [
   { value: 'matrix', label: 'Matrix' },
 ];
 
+const TERMINAL_THEME_OPTIONS = TERMINAL_THEMES.map((t) => ({ value: t.id, label: t.label }));
+
 function App() {
   const [songs, setSongs] = useState<Song[]>([]);
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [selectedEffect, setSelectedEffect] = useState<LyricEffect>('highlight');
+  const [terminalTheme, setTerminalTheme] = useState<TerminalThemeId>('ice');
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure();
   const [formOpened, { open: openForm, close: closeForm }] = useDisclosure(false);
   const [editingSong, setEditingSong] = useState<Song | null>(null);
@@ -175,7 +179,7 @@ function App() {
           <Group>
             <Burger opened={mobileOpened} onClick={toggleMobile} hiddenFrom="sm" size="sm" />
             <IconMusic size={24} />
-            <Title order={3}>Karaoke Lyrics App</Title>
+            <Title order={3}>Music App</Title>
           </Group>
           <Button
             leftSection={<IconPlus size={16} />}
@@ -194,6 +198,12 @@ function App() {
             onChange={(value) => setSelectedEffect(value as LyricEffect)}
             data={EFFECTS}
           />
+          <Select
+            label="Theme terminal"
+            value={terminalTheme}
+            onChange={(value) => setTerminalTheme((value as TerminalThemeId) ?? 'green')}
+            data={TERMINAL_THEME_OPTIONS}
+          />
           <SongList
             songs={songs}
             onPlay={handlePlaySong}
@@ -206,29 +216,13 @@ function App() {
       <AppShell.Main>
         <Container fluid>
           <Stack gap="md">
-            {currentSong && (
-              <>
-                <Paper p="md" withBorder>
-                  <Stack gap="sm">
-                    <Title order={4}>{currentSong.title}</Title>
-                    <Title order={5} c="dimmed" fw={400}>
-                      {currentSong.artist}
-                    </Title>
-                  </Stack>
-                </Paper>
-                <AudioPlayer
-                  audioUrl={currentSong.audioUrl}
-                  onTimeUpdate={handleTimeUpdate}
-                  onEnded={handleAudioEnded}
-                />
-              </>
-            )}
             <Paper p="md" withBorder className={classes.lyricContainer}>
               {currentSong ? (
                 <LyricDisplay
-                  lyrics={currentSong.lyrics}
+                  currentSong={currentSong}
                   currentTime={currentTime}
                   defaultEffect={selectedEffect}
+                  theme={terminalTheme}
                 />
               ) : (
                 <div className={classes.emptyLyric}>
@@ -239,6 +233,16 @@ function App() {
                 </div>
               )}
             </Paper>
+            {
+              currentSong && (
+                <AudioPlayer
+                    audioUrl={currentSong.audioUrl}
+                    onTimeUpdate={handleTimeUpdate}
+                    onEnded={handleAudioEnded}
+                    theme={terminalTheme}
+                />
+              )
+            }
           </Stack>
         </Container>
       </AppShell.Main>

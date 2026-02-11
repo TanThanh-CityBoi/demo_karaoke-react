@@ -1,14 +1,19 @@
 .playerContainer {
+  /* --player-primary: #00ff00;
+  --player-primary-rgb: 0, 255, 0;
+  --player-dim: #006600; */
   padding: 16px;
   background: #1a1a1a;
   border-radius: 8px;
-  border: 1px solid #333;
+  border: 1px solid rgba(var(--player-primary-rgb), 0.4);
+  box-shadow: 0 0 12px rgba(var(--player-primary-rgb), 0.15);
 }
 
 .timeText {
   font-family: 'Courier New', monospace;
   min-width: 100px;
-  text-align: center;
+  color: var(--player-primary) !important;
+  opacity: 0.9;
 }
 
 .slider {

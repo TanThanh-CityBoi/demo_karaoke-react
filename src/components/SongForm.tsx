@@ -43,6 +43,7 @@ export function SongForm({ opened, onClose, onSubmit, initialSong }: SongFormPro
       title: '',
       artist: '',
       audioUrl: '',
+      audioFileName: '',
       lyrics: [],
     },
   });
@@ -59,6 +60,7 @@ export function SongForm({ opened, onClose, onSubmit, initialSong }: SongFormPro
             title: initialSong.title,
             artist: initialSong.artist,
             audioUrl: songWithAudio?.audioUrl || '',
+            audioFileName: songWithAudio?.audioFileName || '',
             lyrics: initialSong.lyrics,
           });
         } catch (error) {
@@ -67,6 +69,7 @@ export function SongForm({ opened, onClose, onSubmit, initialSong }: SongFormPro
             title: initialSong.title,
             artist: initialSong.artist,
             audioUrl: '',
+            audioFileName: initialSong.audioFileName || '',
             lyrics: initialSong.lyrics,
           });
         } finally {
@@ -84,6 +87,7 @@ export function SongForm({ opened, onClose, onSubmit, initialSong }: SongFormPro
 
   const handleFileChange = (file: File | null) => {
     if (file) {
+      form.setFieldValue('audioFileName', file.name);
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
@@ -191,7 +195,7 @@ export function SongForm({ opened, onClose, onSubmit, initialSong }: SongFormPro
           </FileButton>
           {form.values.audioUrl && (
             <Text size="sm" c="green">
-              ✓ {initialSong ? 'Đã có file audio (chọn file mới để thay đổi)' : 'Đã chọn file audio'}
+              ✓ {form.values.audioFileName || (initialSong ? 'Đã có file audio (chọn file mới để thay đổi)' : 'Đã chọn file audio')}
             </Text>
           )}
           {initialSong && !form.values.audioUrl && !loadingAudio && (

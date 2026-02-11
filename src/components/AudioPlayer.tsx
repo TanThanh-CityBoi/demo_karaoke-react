@@ -1,15 +1,28 @@
-import { useRef, useEffect, useState } from 'react';
-import { Box, Button, Slider, Group, Text } from '@mantine/core';
-import { IconPlayerPlay, IconPlayerPause, IconPlayerStop } from '@tabler/icons-react';
+import { useMemo, useRef, useEffect, useState } from 'react';
+import { Button, Slider, Group, Text, Stack, Center } from '@mantine/core';
+import { IconPlayerPlay, IconPlayerPause, IconPlayerStop, IconPlayerSkipBack, IconPlayerSkipForward } from '@tabler/icons-react';
+import type { TerminalThemeId } from '../types';
+import { TERMINAL_THEMES } from '../types';
 import classes from './AudioPlayer.module.css';
 
 interface AudioPlayerProps {
   audioUrl: string | null;
   onTimeUpdate: (currentTime: number) => void;
   onEnded: () => void;
+  theme?: TerminalThemeId;
 }
 
-export function AudioPlayer({ audioUrl, onTimeUpdate, onEnded }: AudioPlayerProps) {
+function getThemeVars(themeId: TerminalThemeId): React.CSSProperties {
+  const theme = TERMINAL_THEMES.find((t) => t.id === themeId) ?? TERMINAL_THEMES[0];
+  return {
+    ['--player-primary' as string]: theme.primary,
+    ['--player-primary-rgb' as string]: theme.primaryRgb,
+    ['--player-dim' as string]: theme.dim,
+  };
+}
+
+export function AudioPlayer({ audioUrl, onTimeUpdate, onEnded, theme = 'green' }: AudioPlayerProps) {
+  const themeVars = useMemo(() => getThemeVars(theme), [theme]);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -82,6 +95,22 @@ export function AudioPlayer({ audioUrl, onTimeUpdate, onEnded }: AudioPlayerProp
     setCurrentTime(value);
   };
 
+  const SKIP_SECONDS = 10;
+
+  const skipBack = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.currentTime = Math.max(0, audio.currentTime - SKIP_SECONDS);
+    setCurrentTime(audio.currentTime);
+  };
+
+  const skipForward = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + SKIP_SECONDS);
+    setCurrentTime(audio.currentTime);
+  };
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -89,40 +118,70 @@ export function AudioPlayer({ audioUrl, onTimeUpdate, onEnded }: AudioPlayerProp
   };
 
   return (
-    <Box className={classes.playerContainer}>
+    <Stack gap="sm" className={classes.playerContainer} style={themeVars}>
       <audio ref={audioRef} preload="metadata" />
-      <Group gap="md" align="center" wrap="nowrap">
+      <Stack gap={0}>
+      <Group justify='space-between'>
+        <Text size="sm" c="dimmed" className={classes.timeText} ta={'start'}>
+          {formatTime(currentTime)}
+        </Text>
+        <Text size="sm" c="dimmed" className={classes.timeText} ta={'end'}>
+          {formatTime(duration)}
+        </Text>
+      </Group>
+      
+      <Slider
+        label={(value) => formatTime(value)}
+        value={currentTime}
+        max={duration || 100}
+        onChange={handleSeek}
+        disabled={!audioUrl || duration === 0}
+        className={classes.slider}
+        color={'var(--player-primary)'}
+        size="md"
+        thumbChildren={<Center fz={18}>🐳</Center>}
+        thumbSize={32}
+        styles={{ thumb: { borderWidth: 2, padding: 3 } }}
+      />
+      </Stack>
+
+      <Group gap="md" align="center" wrap="nowrap" py="md" justify='center'>
+        <Button
+          variant="subtle"
+          color={'var(--player-primary)'}
+          onClick={skipBack}
+          disabled={!audioUrl}
+          title="Tua lại 10s"
+        >
+          <IconPlayerSkipBack size={20} />
+        </Button>
         <Button
           variant="filled"
-          color="green"
+          color={'var(--player-primary)'}
           onClick={togglePlay}
           disabled={!audioUrl}
-          leftSection={isPlaying ? <IconPlayerPause size={20} /> : <IconPlayerPlay size={20} />}
         >
-          {isPlaying ? 'Pause' : 'Play'}
+          {isPlaying ? <IconPlayerPause color={'var(--player-dim)'} size={20} /> : <IconPlayerPlay color={'var(--player-dim)'} size={20} />}
+        </Button>
+        <Button
+          variant="subtle"
+          color={'var(--player-primary)'}
+          onClick={skipForward}
+          disabled={!audioUrl}
+          title="Tua nhanh 10s"
+        >
+          <IconPlayerSkipForward size={20} />
         </Button>
         <Button
           variant="outline"
-          color="red"
+          color={'var(--player-primary)'}
           onClick={stop}
           disabled={!audioUrl}
           leftSection={<IconPlayerStop size={20} />}
         >
           Stop
         </Button>
-        <Text size="sm" c="dimmed" className={classes.timeText}>
-          {formatTime(currentTime)} / {formatTime(duration)}
-        </Text>
       </Group>
-      <Slider
-        value={currentTime}
-        max={duration || 100}
-        onChange={handleSeek}
-        disabled={!audioUrl || duration === 0}
-        className={classes.slider}
-        color="green"
-        size="md"
-      />
-    </Box>
+    </Stack>
   );
 }
