@@ -3,3 +3,7 @@
   text-align: center;
   color: #666;
 }
+
+.card {
+  cursor: pointer;
+}

@@ -6,11 +6,12 @@ import classes from './SongList.module.css';
 interface SongListProps {
   songs: Song[];
   onPlay: (song: Song) => void;
+  onSelect: (song: Song) => void;
   onEdit: (song: Song) => void;
   onDelete: (id: string) => void;
 }
 
-export function SongList({ songs, onPlay, onEdit, onDelete }: SongListProps) {
+export function SongList({ songs, onPlay, onSelect, onEdit, onDelete }: SongListProps) {
   if (songs.length === 0) {
     return (
       <Box className={classes.emptyState}>
@@ -28,7 +29,15 @@ export function SongList({ songs, onPlay, onEdit, onDelete }: SongListProps) {
   return (
     <Stack gap="md">
       {songs.map((song) => (
-        <Card key={song.id} shadow="sm" padding="lg" radius="md" withBorder>
+        <Card
+          key={song.id}
+          shadow="sm"
+          padding="lg"
+          radius="md"
+          withBorder
+          className={classes.card}
+          onClick={() => onSelect(song)}
+        >
           <Stack gap="xs">
             <Box style={{ flex: 1 }}>
               <Group gap="xs" mb="xs">
@@ -47,21 +56,30 @@ export function SongList({ songs, onPlay, onEdit, onDelete }: SongListProps) {
               <Button
                 size="sm"
                 leftSection={<IconPlayerPlay size={16} />}
-                onClick={() => onPlay(song)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPlay(song);
+                }}
               >
                 Phát
               </Button>
               <ActionIcon
                 variant="light"
                 color="blue"
-                onClick={() => onEdit(song)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(song);
+                }}
               >
                 <IconEdit size={16} />
               </ActionIcon>
               <ActionIcon
                 variant="light"
                 color="red"
-                onClick={() => onDelete(song.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(song.id);
+                }}
               >
                 <IconTrash size={16} />
               </ActionIcon>

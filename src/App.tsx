@@ -16,7 +16,7 @@ import { IconPlus, IconMusic } from '@tabler/icons-react';
 import type { Song, LyricEffect, TerminalThemeId } from './types';
 import { TERMINAL_THEMES } from './types';
 import { getSongs, addSong, updateSong, deleteSong, getSongWithAudio } from './utils/storage';
-import { createNangThoMockData } from './data/mockSongs';
+import { createMockData } from './data/mockSongs';
 import { LyricDisplay } from './components/LyricDisplay';
 import { AudioPlayer } from './components/AudioPlayer';
 import { SongList } from './components/SongList';
@@ -37,6 +37,7 @@ function App() {
   const [songs, setSongs] = useState<Song[]>([]);
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
+  const [autoPlayNext, setAutoPlayNext] = useState(false);
   const [selectedEffect, setSelectedEffect] = useState<LyricEffect>('highlight');
   const [terminalTheme, setTerminalTheme] = useState<TerminalThemeId>('ice');
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure();
@@ -51,8 +52,8 @@ function App() {
       const hasMockSong = loadedSongs.some(s => s.id === 'nang-tho-mock');
       if (!hasMockSong) {
         try {
-          const mockSong = await createNangThoMockData();
-          await addSong(mockSong);
+          const mockSongs = await createMockData();
+          await addSong(mockSongs);
           loadedSongs = await getSongs();
         } catch (error) {
           console.error('Failed to load mock data:', error);
@@ -84,7 +85,7 @@ function App() {
           color: 'green',
         });
       } else {
-        await addSong(song);
+        await addSong([song]);
         notifications.show({
           title: 'Thành công',
           message: 'Đã thêm bài hát mới',
@@ -130,9 +131,32 @@ function App() {
 
   const handlePlaySong = async (song: Song) => {
     try {
-      // Load audio từ IndexedDB
       const songWithAudio = await getSongWithAudio(song.id);
       if (songWithAudio) {
+        setAutoPlayNext(true);
+        setCurrentSong(songWithAudio);
+      } else {
+        notifications.show({
+          title: 'Lỗi',
+          message: 'Không thể tải audio của bài hát',
+          color: 'red',
+        });
+      }
+    } catch (error) {
+      notifications.show({
+        title: 'Lỗi',
+        message: 'Không thể tải bài hát. Vui lòng thử lại.',
+        color: 'red',
+      });
+      console.error('Failed to load song:', error);
+    }
+  };
+
+  const handleSelectSong = async (song: Song) => {
+    try {
+      const songWithAudio = await getSongWithAudio(song.id);
+      if (songWithAudio) {
+        setAutoPlayNext(false);
         setCurrentSong(songWithAudio);
       } else {
         notifications.show({
@@ -207,6 +231,7 @@ function App() {
           <SongList
             songs={songs}
             onPlay={handlePlaySong}
+            onSelect={handleSelectSong}
             onEdit={handleEditSong}
             onDelete={handleDeleteSong}
           />
@@ -240,6 +265,8 @@ function App() {
                     onTimeUpdate={handleTimeUpdate}
                     onEnded={handleAudioEnded}
                     theme={terminalTheme}
+                    autoPlay={autoPlayNext}
+                    onAutoPlayStarted={() => setAutoPlayNext(false)}
                 />
               )
             }

@@ -172,23 +172,25 @@ const saveSongMetadata = async (song: Song): Promise<void> => {
 };
 
 // Thêm song mới (lưu cả metadata và audio)
-export const addSong = async (song: Song): Promise<void> => {
-  try {
-    await initDBWithMigration();
-    // Tách audioUrl ra để lưu riêng
-    const audioData = song.audioUrl;
-    const songWithoutAudio = { ...song, audioUrl: '' };
-
-    // Lưu metadata
-    await saveSongMetadata(songWithoutAudio);
-
-    // Lưu audio vào IndexedDB
-    if (audioData) {
-      await saveAudio(song.id, audioData);
+export const addSong = async (songs: Song[]): Promise<void> => {
+  for (const song of songs) {
+    try {
+      await initDBWithMigration();
+      // Tách audioUrl ra để lưu riêng
+      const audioData = song.audioUrl;
+      const songWithoutAudio = { ...song, audioUrl: '' };
+  
+      // Lưu metadata
+      await saveSongMetadata(songWithoutAudio);
+  
+      // Lưu audio vào IndexedDB
+      if (audioData) {
+        await saveAudio(song.id, audioData);
+      }
+    } catch (error) {
+      console.error('Failed to add song:', error);
+      throw error;
     }
-  } catch (error) {
-    console.error('Failed to add song:', error);
-    throw error;
   }
 };
 

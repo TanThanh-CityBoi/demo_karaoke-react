@@ -3,6 +3,8 @@ import { nanoid } from 'nanoid';
 
 // Import audio file từ assets
 import audioFileUrl from '../assets/audio/Nàng Thơ.mp3?url';
+import coDaiVaHoaDanhDanhAudioFileUrl from '../assets/audio/Cỏ Dại Và Hoa Dành Dành.mp3?url';
+import { convertLyricWithTimeToLyricLine } from '../utils/bulkImport';
 
 // Convert audio URL to base64
 const loadAudioAsBase64 = async (url: string): Promise<string> => {
@@ -22,6 +24,63 @@ const loadAudioAsBase64 = async (url: string): Promise<string> => {
     console.error('Failed to load audio:', error);
     return '';
   }
+};
+
+
+
+
+export const createMockData = async (): Promise<Song[]> => {
+  return await Promise.all([createNangThoMockData(), createCoDaiVaHoaDanhDanh()]);
+};
+
+// Mock data cho bài "Nàng Thơ"
+export const createCoDaiVaHoaDanhDanh = async (): Promise<Song> => {
+  // Load audio file từ assets
+  const audioUrl = await loadAudioAsBase64(coDaiVaHoaDanhDanhAudioFileUrl);
+
+  const rawLyrics = `
+        [highlight] [11:16] Làn gió thổi bay dấu yêu đi tan tành
+        [highlight] [17:22] Mà anh không thể quen vắng bóng hình em
+        [highlight] [23:28] Ngày sau anh nghĩ có lẽ anh chẳng yêu một người nào nữa
+        [highlight] [29:33] Nhưng nỗi cô đơn biết làm sao giờ?
+        [highlight] [34:38] Cỏ dại khô dưới chân sao xứng với hoa dành dành đây?
+        [highlight] [39:44] Mùa hạ với mùa đông sao có thể bên nhau phải không?
+        [highlight] [45:51] Và khi em rời đi, anh trở thành một người lạ từng quen biết
+        [highlight] [52:56] Anh chúc cho em được hạnh phúc mãi sau này
+        [highlight] [57:61] Cỏ dại khô dưới chân sao xứng với hoa dành dành đây
+        [highlight] [62:68] Chẳng đủ tốt để có thể níu giữ em trong vòng tay
+        [highlight] [69:70] Giọt nước mắt từng rơi
+        [highlight] [71:75] Là ký ức, vết sẹo cuộc tình đã trôi
+        [highlight] [76:80] Mai sau không ai đến giúp chữa lành nữa rồi...
+        [fade] [81:86] Làn gió thổi bay dấu yêu đi tan tành
+        [fade] [87:92] Mà anh không thể quen vắng bóng hình em
+        [fade] [93:98] Ngày sau anh nghĩ có lẽ anh chẳng yêu một người nào nữa
+        [fade] [99:103] Nhưng nỗi cô đơn biết làm sao giờ?
+        [fade] [104:108] Cỏ dại khô dưới chân sao xứng với hoa dành dành đây?
+        [fade] [109:114] Mùa hạ với mùa đông sao có thể bên nhau phải không?
+        [fade] [115:121] Và khi em rời đi, anh trở thành một người lạ từng quen biết
+        [fade] [122:126] Anh chúc cho em được hạnh phúc mãi sau này
+        [fade] [127:132] Cỏ dại khô dưới chân sao xứng với hoa dành dành đây
+        [fade] [133:137] Chẳng đủ tốt để có thể níu giữ em trong vòng tay
+        [fade] [138:141] Giọt nước mắt từng rơi
+        [fade] [142:145] Là ký ức, vết sẹo cuộc tình đã trôi
+        [fade] [146:152] Mai sau không ai đến giúp chữa lành nữa rồi...
+        [matrix] [153:157] ...
+  `;
+
+  // Timing đã được điều chỉnh dựa trên cấu trúc bài hát thực tế
+  // Bạn có thể chỉnh sửa timing trong form nếu cần đồng bộ chính xác hơn
+  const lyrics: LyricLine[] = convertLyricWithTimeToLyricLine(rawLyrics);
+
+  return {
+    id: 'co-dai-va-hoa-danh-danh-mock',
+    title: 'Cỏ Dại Và Hoa Dành Dành Dành',
+    artist: 'F47 Cover',
+    audioUrl,
+    lyrics,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
 };
 
 // Mock data cho bài "Nàng Thơ"

@@ -10,6 +10,10 @@ interface AudioPlayerProps {
   onTimeUpdate: (currentTime: number) => void;
   onEnded: () => void;
   theme?: TerminalThemeId;
+  /** Khi true, tự phát sau khi load xong (dùng khi user bấm Phát trên card) */
+  autoPlay?: boolean;
+  /** Gọi sau khi đã bắt đầu phát do autoPlay */
+  onAutoPlayStarted?: () => void;
 }
 
 function getThemeVars(themeId: TerminalThemeId): React.CSSProperties {
@@ -21,7 +25,7 @@ function getThemeVars(themeId: TerminalThemeId): React.CSSProperties {
   };
 }
 
-export function AudioPlayer({ audioUrl, onTimeUpdate, onEnded, theme = 'green' }: AudioPlayerProps) {
+export function AudioPlayer({ audioUrl, onTimeUpdate, onEnded, theme = 'green', autoPlay = false, onAutoPlayStarted }: AudioPlayerProps) {
   const themeVars = useMemo(() => getThemeVars(theme), [theme]);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -58,23 +62,67 @@ export function AudioPlayer({ audioUrl, onTimeUpdate, onEnded, theme = 'green' }
     };
   }, [onTimeUpdate, onEnded]);
 
+  const onAutoPlayStartedRef = useRef(onAutoPlayStarted);
+  onAutoPlayStartedRef.current = onAutoPlayStarted;
+  const autoPlayRef = useRef(autoPlay);
+  autoPlayRef.current = autoPlay;
+
   useEffect(() => {
-    if (audioUrl && audioRef.current) {
-      audioRef.current.src = audioUrl;
-      audioRef.current.load();
+    if (!audioUrl || !audioRef.current) return;
+    const audio = audioRef.current;
+    const shouldAutoPlay = autoPlayRef.current;
+    audio.src = audioUrl;
+    audio.load();
+
+    if (shouldAutoPlay) {
+      const tryPlay = () => {
+        audio.play().then(() => {
+          setIsPlaying(true);
+          onAutoPlayStartedRef.current?.();
+        }).catch((err) => {
+          console.error('AutoPlay failed:', err);
+        });
+      };
+      if (audio.readyState >= 3) {
+        tryPlay();
+      } else {
+        const handler = () => tryPlay();
+        audio.addEventListener('canplay', handler, { once: true });
+        return () => audio.removeEventListener('canplay', handler);
+      }
+    } else {
+      setIsPlaying(false);
     }
+    // Chỉ chạy khi đổi bài - không chạy khi autoPlay đổi (tránh reload và dừng phát)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audioUrl]);
+
+  // Khi bấm Phát trên card cùng bài đã chọn: audioUrl không đổi, cần play()
+  useEffect(() => {
+    if (!autoPlay || !audioUrl || !audioRef.current) return;
+    const audio = audioRef.current;
+    if (audio.src && audio.readyState >= 2) {
+      audio.play().then(() => {
+        setIsPlaying(true);
+        onAutoPlayStartedRef.current?.();
+      }).catch((err) => console.error('Play failed:', err));
+    }
+  }, [autoPlay, audioUrl]);
 
   const togglePlay = () => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || !audio.src) return;
 
     if (isPlaying) {
       audio.pause();
+      setIsPlaying(false);
     } else {
-      audio.play();
+      audio.play().then(() => {
+        setIsPlaying(true);
+      }).catch((err) => {
+        console.error('Play failed:', err);
+      });
     }
-    setIsPlaying(!isPlaying);
   };
 
   const stop = () => {
